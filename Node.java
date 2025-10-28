@@ -1,74 +1,109 @@
 // imported first from grasp
-public class Node {
-    private Binop op;
-    private Node left;
-    private Node right;
-    private Const constant;
-    private Variable variable;
+import java.util.*;
 
-    public Node(Binop op, Node left, Node right) 
+public class Node {
+
+    protected Node lChild;
+    protected Node rChild;
+    protected Binop op;
+    protected Const c;
+    protected Variable v;
+
+    public Node(Const c) 
+    {
+        this.c = c;
+        this.op = null;
+        this.v = null;
+        this.lChild = null;
+        this.rChild = null;
+    }
+
+    public Node(Variable v) 
+    {
+        this.v = v;
+        this.op = null;
+        this.c = null;
+        this.lChild = null;
+        this.rChild = null;
+    }
+
+    public Node(Binop op) 
     {
         this.op = op;
-        this.left = left;
-        this.right = right;
+        this.c = null;
+        this.v = null;
+        this.lChild = null;
+        this.rChild = null;
     }
 
-    public Node(Const constant) 
+    public double eval(double[] data) 
     {
-        this.constant = constant;
-    }
-
-    public Node(Variable variable) 
-    {
-        this.variable = variable;
-    }
-
-    public double eval(double[] values) 
-    {
-        if (constant != null) {
-            return constant.eval(values);
-        } else if (variable != null) {
-            return variable.eval(values);
-        } else {
-            double leftVal = left.eval(values);
-            double rightVal = right.eval(values);
-            return op.eval(leftVal, rightVal);
+        if (c != null) {
+            return c.eval(data);
+        } else if (v != null) {
+            return v.eval(data);
+        } else if (op != null) {
+            return op.eval(lChild, rChild, data);
         }
+        return 0.0;
     }
 
     public String toString() 
     {
-        if (constant != null) return constant.toString();
-        if (variable != null) return variable.toString();
-        return "(" + left.toString() + " " + op.toString() + " " + right.toString() + ")";
+        if (c != null) {
+            return c.toString();
+        } else if (v != null) {
+            return v.toString();
+        } else if (op != null) {
+            return "(" + lChild + " " + op + " " + rChild + ")";
+        }
+        return "";
     }
 
-   
     public void traverse(Collector c) 
     {
-        c.collect(this);  // collect this node first (preorder)
-        if (left != null) left.traverse(c);
-        if (right != null) right.traverse(c);
+        c.collect(this);
+        if (lChild != null) {
+            lChild.traverse(c);
+        }
+        if (rChild != null) {
+            rChild.traverse(c);
+        }
     }
-   
+
     public void swapLeft(Node trunk) 
     {
-        Node temp = this.left;
-        this.left = trunk.left;
-        trunk.left = temp;
+        Node temp = this.lChild;
+        this.lChild = trunk.lChild;
+        trunk.lChild = temp;
     }
 
     public void swapRight(Node trunk) 
     {
-        Node temp = this.right;
-        this.right = trunk.right;
-        trunk.right = temp;
+        Node temp = this.rChild;
+        this.rChild = trunk.rChild;
+        trunk.rChild = temp;
     }
 
     public boolean isLeaf() 
     {
-        return (left == null && right == null);
+        return (op == null);
+    }
+
+    public void addRandomKids(NodeFactory n, int maxDepth, Random rand) 
+    {
+        if (isLeaf() || maxDepth <= 0) return;
+        if (lChild == null) {
+            Node child = n.getRandomNode(rand, maxDepth - 1);
+            lChild = child;
+            lChild.addRandomKids(n, maxDepth - 1, rand);
+        }
+
+        if (rChild == null) {
+            Node child = n.getRandomNode(rand, maxDepth - 1);
+            rChild = child;
+            rChild.addRandomKids(n, maxDepth - 1, rand);
+        }
     }
 }
-
    
